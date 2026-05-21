@@ -149,7 +149,7 @@
             div.className = 'card magic';
             div.innerHTML = `<span>${p.n}</span><br>${p.d}`;
             div.onclick = () => { 
-                // Cooldown: Bloqueia imediatamente após o clique para evitar spam
+                /* Cooldown: Bloqueia imediatamente após o clique para evitar spam*/
                 if(podeJogar) { 
                     podeJogar = false; 
                     if(p.type==='buff') buffAtivo = 5; 
@@ -157,7 +157,7 @@
                     maoPoderes.splice(i,1); 
                     renderizar();
                     atualizarUI();
-                    // Pequena janela para o jogador poder jogar sua carta física após bufar
+                    /* Pequena janela para o jogador poder jogar sua carta física após bufar*/
                     setTimeout(() => { podeJogar = true; atualizarUI(); }, 200);
                 } 
             };
@@ -169,7 +169,7 @@
             div.className = `card ${c.m ? 'manilha' : ''} ${buffAtivo > 0 ? 'glow' : ''}`;
             div.innerHTML = `<span>${c.n}</span>`;
             div.onclick = () => { 
-                // Cooldown: Trava o turno ao escolher a carta
+                /* Cooldown: Trava o turno ao escolher a carta*/
                 if(podeJogar) { 
                     podeJogar = false; 
                     atualizarUI();
@@ -286,7 +286,7 @@
             if(fimMao || maoPlayer.length === 0) {
                 finalizarMao();
             } else {
-                podeJogar = true; // Libera o cooldown para o próximo turno
+                podeJogar = true;   /* Libera o cooldown para o próximo turno*/
                 renderizar();
                 atualizarUI();
             }
@@ -324,7 +324,7 @@
         if (valorRodada === 1) btnTruco.innerText = "Truco! (3)";
         else btnTruco.innerText = "Pedir " + vProx + "!";
         
-        // O botão de Truco também acompanha o cooldown global do jogo
+        /* O botão de Truco também acompanha o cooldown global do jogo */
         btnTruco.disabled = !podeJogar || valorRodada >= 12;
     }
 
