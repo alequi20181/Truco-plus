@@ -5,7 +5,7 @@
     <title>Truco Plus - Magic Edition</title>
     <style>
         :root { --table: #1a472a; --magic: #9b59b6; --gold: #f1c40f; --danger: #e74c3c; }
-        body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        body { background: #111; color: white; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; position: relative; }
         
         /* Layout principal centralizado */
         #main-wrapper { display: flex; gap: 20px; align-items: center; justify-content: center; }
@@ -35,9 +35,38 @@
         .high-strength { color: #5dade2; font-weight: bold; }
         .manilha-strength { color: #e74c3c; font-weight: bold; }
         .force-badge { background: rgba(255,255,255,0.15); padding: 1px 5px; border-radius: 3px; font-size: 11px; color: #fff; }
+
+        /* Botão e Modal de Regras */
+        .btn-regras { position: absolute; top: 20px; left: 20px; background: #2980b9; color: white; border: 2px solid white; padding: 10px 15px; cursor: pointer; font-weight: bold; border-radius: 8px; font-size: 14px; text-transform: uppercase; z-index: 10; transition: 0.2s; }
+        .btn-regras:hover { background: #3498db; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal-content { background: #222; border: 3px solid var(--gold); border-radius: 20px; padding: 25px; width: 500px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .modal-content h2 { color: var(--gold); margin-top: 0; text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; }
+        .modal-content ul { padding-left: 20px; line-height: 1.6; }
+        .modal-content li { margin-bottom: 10px; }
+        .btn-close-modal { display: block; margin: 20px auto 0 auto; background: var(--danger); color: white; border: none; padding: 10px 25px; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; }
     </style>
 </head>
 <body>
+
+<button class="btn-regras" onclick="abrirRegras()">📜 Ver Regras</button>
+
+<div id="modal-regras" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Regras Básicas do Truco</h2>
+        <ul>
+            <li><strong>Objetivo:</strong> O objetivo principal do jogo é atingir primeiro um total de <strong>12 pontos</strong> na pontuação geral.</li>
+            <li><strong>As Mãos e Quedas:</strong> Cada rodada (mão) vale inicialmente 1 ponto e é disputada em até 3 quedas (turnos). Quem vencer duas dessas quedas ganha a rodada e os pontos dela.</li>
+            <li><strong>Gritar Truco:</strong> No seu turno, antes de jogar a carta, você pode pedir "Truco". Isso eleva o valor da rodada para 3 pontos. Se o oponente aceitar, o jogo continua. Se ele fugir, você ganha o valor anterior da rodada imediatamente.</li>
+            <li><strong>Aumentar a Aposta:</strong> Se o Truco for aceito, o valor pode ser aumentado sucessivamente para 6, 9 e 12 pontos conforme a disputa esquenta.</li>
+            <li><strong>Força das Cartas:</strong> A tabela lateral direita mostra a hierarquia exata deste jogo. As 4 cartas vermelhas no topo são as <strong>Manilhas Fixas</strong> e ganham de qualquer outra carta comum.</li>
+            <li><strong>Empates (Cangalho):</strong> Se a primeira queda empatar, quem vencer a segunda ganha a rodada. Se a segunda ou terceira queda empatar, quem tiver vencido a primeira queda ganha o jogo.</li>
+            <li><strong>Cartas Mágicas:</strong> Use os pergaminhos roxos na sua área mágica para aplicar efeitos de modificação de força imediatamente antes de descer sua carta física.</li>
+        </ul>
+        <button class="btn-close-modal" onclick="fecharRegras()">Fechar</button>
+    </div>
+</div>
 
 <div id="main-wrapper">
     <div id="game-container">
@@ -97,6 +126,7 @@
     let buffAtivo = 0, debuffIA = 0;
     let maoPlayer = [], maoIA = [], maoPoderes = [];
     let primeiraRodadaVencedor = null;
+    let traveDoModal = false; // Armazena o estado de jogo antes de abrir o menu de regras
 
     const deckTruco = [
         {n:'4', v:1}, {n:'5', v:2}, {n:'6', v:3}, {n:'7', v:4},
@@ -110,6 +140,19 @@
         {n:'❄️', type:'debuff', d:'IA -3'},
         {n:'🛑', type:'null', d:'Anular'}
     ];
+
+    function abrirRegras() {
+        traveDoModal = podeJogar;
+        podeJogar = false; // Impede cliques por trás do modal
+        document.getElementById('modal-regras').style.display = 'flex';
+        atualizarUI();
+    }
+
+    function fecharRegras() {
+        document.getElementById('modal-regras').style.display = 'none';
+        podeJogar = traveDoModal; // Restaura o estado anterior do jogo
+        atualizarUI();
+    }
 
     function concederPoderAleatorio() {
         if(maoPoderes.length < 4) {
@@ -149,7 +192,6 @@
             div.className = 'card magic';
             div.innerHTML = `<span>${p.n}</span><br>${p.d}`;
             div.onclick = () => { 
-                /* Cooldown: Bloqueia imediatamente após o clique para evitar spam*/
                 if(podeJogar) { 
                     podeJogar = false; 
                     if(p.type==='buff') buffAtivo = 5; 
@@ -157,7 +199,6 @@
                     maoPoderes.splice(i,1); 
                     renderizar();
                     atualizarUI();
-                    /* Pequena janela para o jogador poder jogar sua carta física após bufar*/
                     setTimeout(() => { podeJogar = true; atualizarUI(); }, 200);
                 } 
             };
@@ -169,7 +210,6 @@
             div.className = `card ${c.m ? 'manilha' : ''} ${buffAtivo > 0 ? 'glow' : ''}`;
             div.innerHTML = `<span>${c.n}</span>`;
             div.onclick = () => { 
-                /* Cooldown: Trava o turno ao escolher a carta*/
                 if(podeJogar) { 
                     podeJogar = false; 
                     atualizarUI();
@@ -180,7 +220,7 @@
         });
     }
 
-    function obterProximoValor() {
+    function obtenerProximoValor() {
         if (valorRodada === 1) return 3;
         if (valorRodada === 3) return 6;
         if (valorRodada === 6) return 9;
@@ -193,7 +233,7 @@
         podeJogar = false;
         atualizarUI();
         let vAnt = valorRodada;
-        let vProx = obterProximoValor();
+        let vProx = obtenerProximoValor();
         
         document.getElementById('game-msg').innerText = "Você gritou " + vProx + "!";
         
@@ -216,7 +256,7 @@
         let maiorCartaIA = Math.max(...maoIA.map(c => c.v));
         if(Math.random() < 0.15 && valorRodada < 12 && maiorCartaIA >= 8) {
             let vAnt = valorRodada;
-            let vProx = obterProximoValor();
+            let vProx = obtenerProximoValor();
             if(confirm("IA gritou " + vProx + "! Aceita?")) { 
                 valorRodada = vProx; 
                 atualizarUI(); 
@@ -286,7 +326,7 @@
             if(fimMao || maoPlayer.length === 0) {
                 finalizarMao();
             } else {
-                podeJogar = true;   /* Libera o cooldown para o próximo turno*/
+                podeJogar = true;   
                 renderizar();
                 atualizarUI();
             }
@@ -324,7 +364,6 @@
         if (valorRodada === 1) btnTruco.innerText = "Truco! (3)";
         else btnTruco.innerText = "Pedir " + vProx + "!";
         
-        /* O botão de Truco também acompanha o cooldown global do jogo */
         btnTruco.disabled = !podeJogar || valorRodada >= 12;
     }
 
